@@ -477,6 +477,21 @@
                         </button>
                     </div>
                 </div>
+                
+                <div class="bg-slate-700 rounded-xl p-4">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-3xl">🦈</span>
+                            <div>
+                                <h3 class="text-white font-semibold">Sea Creature</h3>
+                                <p class="text-gray-400 text-sm">Add a majestic sea creature directly</p>
+                            </div>
+                        </div>
+                        <button class="buy-btn bg-cyan-500 hover:bg-cyan-600 text-white px-3 py-2 rounded-lg font-semibold text-xs whitespace-nowrap" data-item="sea-creature" data-cost="100">
+                            100 🪙
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -769,6 +784,10 @@
                     this.gameData.food--;
                     this.createFoodParticles();
                     
+                    // Calculate coin reward based on number of fish (2-3 coins per fish)
+                    const coinsEarned = this.fish.length * (Math.floor(Math.random() * 2) + 2);
+                    this.gameData.coins += coinsEarned;
+                    
                     // Update fish happiness with more significant boost
                     this.fish.forEach(fish => {
                         fish.happiness = Math.min(100, fish.happiness + 25);
@@ -787,7 +806,7 @@
                     });
                     
                     this.updateUI();
-                    this.showMessage('Fish fed! They look happy! 😊', 'success');
+                    this.showMessage(`Fish fed! +${coinsEarned} 🪙 earned! 😊`, 'success');
                     this.calculateHappiness();
                 } else if (this.gameData.food === 0) {
                     this.showMessage('No food available! Buy some from the store', 'error');
@@ -1070,12 +1089,23 @@
             buyItem(item, cost) {
                 if (this.gameData.coins >= cost) {
                     this.gameData.coins -= cost;
-                    this.gameData[item]++;
+                    
+                    if (item === 'sea-creature') {
+                        // Directly add a special fish instead of adding to inventory
+                        this.gameData.fishCount++;
+                        const fish = this.createFish('special');
+                        this.fish.push(fish);
+                        this.showMessage('Sea creature added directly to your tank! 🦈', 'success');
+                        this.calculateHappiness();
+                    } else {
+                        // Regular inventory items
+                        this.gameData[item]++;
+                        this.showMessage(`Bought ${item}! 🛒`, 'success');
+                    }
                     
                     this.updateUI();
                     // Update the store coin display immediately
                     document.getElementById('store-coins-display').textContent = this.gameData.coins;
-                    this.showMessage(`Bought ${item}! 🛒`, 'success');
                 } else {
                     this.showMessage('Not enough coins! 💰', 'error');
                 }
