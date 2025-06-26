@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aquarium Simulator - Premium Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ocean-blue': '#0ea5e9',
+                        'deep-blue': '#0369a1',
+                        'aqua-cyan': '#06b6d4',
+                        'bubble-blue': '#67e8f9',
+                        'coral-pink': '#f472b6',
+                        'seaweed-green': '#10b981',
+                        'sand-yellow': '#fbbf24',
+                        'pearl-white': '#f8fafc'
+                    },
+                    animation: {
+                        'swim-left': 'swimLeft 8s ease-in-out infinite',
+                        'swim-right': 'swimRight 10s ease-in-out infinite',
+                        'swim-circular': 'swimCircular 12s linear infinite',
+                        'bubble-rise': 'bubbleRise 4s ease-in-out infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'shimmer': 'shimmer 2s ease-in-out infinite alternate',
+                        'pulse-glow': 'pulseGlow 3s ease-in-out infinite',
+                        'wave': 'wave 3s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        swimLeft: {
+                            '0%, 100%': { transform: 'translateX(0) translateY(0) scaleX(1)' },
+                            '25%': { transform: 'translateX(-20px) translateY(-10px) scaleX(1)' },
+                            '50%': { transform: 'translateX(-40px) translateY(10px) scaleX(-1)' },
+                            '75%': { transform: 'translateX(-20px) translateY(-5px) scaleX(-1)' }
+                        },
+                        swimRight: {
+                            '0%, 100%': { transform: 'translateX(0) translateY(0) scaleX(-1)' },
+                            '25%': { transform: 'translateX(30px) translateY(15px) scaleX(-1)' },
+                            '50%': { transform: 'translateX(60px) translateY(-10px) scaleX(1)' },
+                            '75%': { transform: 'translateX(30px) translateY(8px) scaleX(1)' }
+                        },
+                        swimCircular: {
+                            '0%': { transform: 'translateX(0) translateY(0) rotate(0deg)' },
+                            '25%': { transform: 'translateX(50px) translateY(-30px) rotate(90deg)' },
+                            '50%': { transform: 'translateX(0) translateY(-60px) rotate(180deg)' },
+                            '75%': { transform: 'translateX(-50px) translateY(-30px) rotate(270deg)' },
+                            '100%': { transform: 'translateX(0) translateY(0) rotate(360deg)' }
+                        },
+                        bubbleRise: {
+                            '0%': { transform: 'translateY(0) scale(0.8)', opacity: '0.7' },
+                            '50%': { transform: 'translateY(-150px) scale(1)', opacity: '1' },
+                            '100%': { transform: 'translateY(-300px) scale(0.6)', opacity: '0' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-20px)' }
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '-200% 0' },
+                            '100%': { backgroundPosition: '200% 0' }
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { boxShadow: '0 0 20px rgba(6, 182, 212, 0.5)' },
+                            '50%': { boxShadow: '0 0 40px rgba(6, 182, 212, 0.8), 0 0 60px rgba(6, 182, 212, 0.3)' }
+                        },
+                        wave: {
+                            '0%, 100%': { transform: 'translateX(0px)' },
+                            '50%': { transform: 'translateX(10px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-ocean {
+            background: linear-gradient(180deg, 
+                rgba(6, 182, 212, 0.4) 0%, 
+                rgba(14, 165, 233, 0.6) 20%, 
+                rgba(3, 105, 161, 0.8) 60%, 
+                rgba(7, 89, 133, 1) 100%);
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            box-shadow: 
+                inset 0 0 50px rgba(6, 182, 212, 0.3),
+                0 8px 32px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+        
+        .water-surface {
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(103, 232, 249, 0.6) 20%, 
+                rgba(6, 182, 212, 0.8) 50%, 
+                rgba(103, 232, 249, 0.6) 80%, 
+                transparent 100%);
+            animation: wave 3s ease-in-out infinite;
+            height: 4px;
+            border-radius: 2px;
+        }
+        
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .touch-ripple {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .touch-ripple::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .touch-ripple:active::after {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .fish-svg {
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .tank-background {
+            background: 
+                radial-gradient(ellipse at center bottom, rgba(59, 130, 246, 0.4) 0%, transparent 70%),
+                radial-gradient(ellipse at center top, rgba(6, 182, 212, 0.3) 0%, transparent 50%),
+                linear-gradient(180deg, 
+                    rgba(14, 165, 233, 0.2) 0%, 
+                    rgba(6, 182, 212, 0.4) 30%, 
+                    rgba(3, 105, 161, 0.6) 70%, 
+                    rgba(15, 23, 42, 0.8) 100%);
+        }
+        
+        .water-ripples {
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 60%, rgba(255, 255, 255, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.06) 0%, transparent 30%);
+            animation: shimmer 4s ease-in-out infinite alternate;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 overflow-hidden">
+    <!-- Landing Screen -->
+    <div id="landing-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 transition-all duration-1000">
+        <div class="text-center space-y-8 px-6">
+            <!-- Animated Background Elements -->
+            <div class="absolute inset-0 overflow-hidden">
+                <div class="absolute top-1/4 left-1/4 w-32 h-32 bg-aqua-cyan/20 rounded-full animate-float"></div>
+                <div class="absolute top-3/4 right-1/4 w-24 h-24 bg-bubble-blue/30 rounded-full animate-float" style="animation-delay: 1s;"></div>
+                <div class="absolute top-1/2 left-1/6 w-16 h-16 bg-ocean-blue/25 rounded-full animate-float" style="animation-delay: 2s;"></div>
+            </div>
+            
+            <!-- Title and Content Tile -->
+            <div class="relative z-10">
+                <div class="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-8 border border-aqua-cyan/30 shadow-2xl space-y-6">
+                    <h1 class="text-5xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-aqua-cyan to-bubble-blue">
+                        AquaLife
+                    </h1>
+                    <p class="text-xl md:text-2xl text-blue-100 font-light">Premium Aquarium Simulator</p>
+                    <p class="text-lg text-blue-200 opacity-80">Care for your digital companions</p>
+                    
+                    <!-- Start Button -->
+                    <button id="start-btn" class="relative px-12 py-4 bg-gradient-to-r from-aqua-cyan to-ocean-blue rounded-full text-white font-semibold text-lg shadow-2xl transform transition-all duration-300 hover:scale-110 hover:shadow-cyan-500/50 touch-ripple">
+                        <span class="relative z-10">Begin Your Journey</span>
+                        <div class="absolute inset-0 bg-gradient-to-r from-bubble-blue to-aqua-cyan rounded-full opacity-0 transition-opacity duration-300 hover:opacity-100"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app-container" class="h-screen flex flex-col opacity-0 transition-opacity duration-1000">
+        <!-- Header with Stats -->
+        <header class="bg-slate-800/90 backdrop-blur-sm px-4 py-3 border-b border-slate-700">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                        <span class="text-white font-medium">Tank Status: Healthy</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-2xl">🐟</span>
+                        <span class="text-white font-semibold" id="fish-count">0</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-2xl">🪙</span>
+                        <span class="text-yellow-400 font-semibold" id="coins-display">100</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-2xl">😊</span>
+                        <span class="text-blue-300 font-semibold" id="happiness-display">Neutral</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tank Area (Top 2/3) -->
+        <div class="flex-1 relative overflow-hidden min-h-[60vh]">
+            <div id="tank-container" class="w-full h-full relative gradient-ocean touch-ripple min-h-[400px]">
+                <!-- Water Background -->
+                <div class="absolute inset-0 tank-background"></div>
+                
+                <!-- Water Ripples Effect -->
+                <div class="absolute inset-0 water-ripples pointer-events-none"></div>
+                
+                <!-- Water Surface Effect -->
+                <div class="absolute top-0 left-0 right-0 water-surface"></div>
+                
+                <!-- Tank Glass Effect -->
+                <div class="absolute inset-1 border-2 border-white/30 rounded-lg pointer-events-none shadow-inner"></div>
+                <div class="absolute inset-3 border border-white/10 rounded-lg pointer-events-none"></div>
+                
+                <!-- Zoom Controls -->
+                <div class="absolute top-4 right-4 flex flex-col space-y-2 z-20">
+                    <button id="zoom-in" class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all">
+                        <span class="text-xl font-bold">+</span>
+                    </button>
+                    <button id="zoom-out" class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all">
+                        <span class="text-xl font-bold">−</span>
+                    </button>
+                </div>
+                
+                <!-- Tank Decorations -->
+                <div id="decorations" class="absolute bottom-0 left-0 right-0 h-32 pointer-events-none z-10">
+                    <!-- Sand layers -->
+                    <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-sand-yellow/90 to-sand-yellow/40 rounded-b-lg"></div>
+                    <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-yellow-600/60 to-transparent rounded-b-lg"></div>
+                    
+                    <!-- Seaweed garden -->
+                    <div class="absolute bottom-12 left-6">
+                        <div class="w-4 h-24 bg-gradient-to-t from-seaweed-green to-green-400 rounded-t-full animate-wave origin-bottom shadow-lg transform -rotate-3"></div>
+                    </div>
+                    <div class="absolute bottom-12 left-12">
+                        <div class="w-3 h-20 bg-gradient-to-t from-seaweed-green/80 to-green-300 rounded-t-full animate-wave origin-bottom shadow-lg transform rotate-2" style="animation-delay: 0.5s;"></div>
+                    </div>
+                    <div class="absolute bottom-12 left-16">
+                        <div class="w-5 h-28 bg-gradient-to-t from-seaweed-green to-emerald-400 rounded-t-full animate-wave origin-bottom shadow-lg transform -rotate-1" style="animation-delay: 1s;"></div>
+                    </div>
+                    
+                    <!-- Right seaweed cluster -->
+                    <div class="absolute bottom-12 right-8">
+                        <div class="w-4 h-26 bg-gradient-to-t from-seaweed-green/90 to-green-400 rounded-t-full animate-wave origin-bottom shadow-lg transform rotate-1" style="animation-delay: 1.5s;"></div>
+                    </div>
+                    <div class="absolute bottom-12 right-14">
+                        <div class="w-3 h-22 bg-gradient-to-t from-seaweed-green/70 to-green-300 rounded-t-full animate-wave origin-bottom shadow-lg transform -rotate-2" style="animation-delay: 2s;"></div>
+                    </div>
+                    
+                    <!-- Coral formations -->
+                    <div class="absolute bottom-12 left-1/4">
+                        <div class="w-10 h-14 bg-gradient-to-t from-coral-pink/90 to-pink-300 rounded-full shadow-lg"></div>
+                        <div class="w-6 h-10 bg-gradient-to-t from-coral-pink/70 to-pink-200 rounded-full shadow-lg absolute -top-2 left-2"></div>
+                        <div class="w-4 h-8 bg-gradient-to-t from-coral-pink/60 to-pink-100 rounded-full shadow-lg absolute -top-1 right-1"></div>
+                    </div>
+                    
+                    <!-- Rock formations -->
+                    <div class="absolute bottom-12 right-1/4">
+                        <div class="w-12 h-10 bg-gradient-to-t from-gray-700 to-gray-500 rounded-full shadow-lg"></div>
+                        <div class="w-8 h-6 bg-gradient-to-t from-gray-600 to-gray-400 rounded-full shadow-lg absolute -top-1 left-3"></div>
+                    </div>
+                    
+                    <!-- Small decorative elements -->
+                    <div class="absolute bottom-12 left-1/3 transform translate-x-8">
+                        <div class="w-3 h-3 bg-purple-400/80 rounded-full shadow-sm animate-pulse"></div>
+                    </div>
+                    <div class="absolute bottom-12 right-1/3 transform -translate-x-12">
+                        <div class="w-2 h-2 bg-blue-300/70 rounded-full shadow-sm animate-pulse" style="animation-delay: 1s;"></div>
+                    </div>
+                    <div class="absolute bottom-12 left-1/2">
+                        <div class="w-4 h-4 bg-yellow-300/60 rounded-full shadow-sm animate-pulse" style="animation-delay: 2s;"></div>
+                    </div>
+                    
+                    <!-- Treasure chest - centered -->
+                    <div class="absolute bottom-12 left-1/2 transform -translate-x-1/2">
+                        <div class="w-10 h-7 bg-gradient-to-t from-yellow-800 to-yellow-600 rounded-sm shadow-lg"></div>
+                        <div class="w-10 h-3 bg-gradient-to-t from-yellow-700 to-yellow-500 rounded-t-sm shadow-lg absolute -top-1"></div>
+                        <div class="w-1 h-1 bg-yellow-300 rounded-full absolute top-0 left-2 animate-pulse"></div>
+                        <div class="w-1 h-1 bg-yellow-200 rounded-full absolute top-1 left-4 animate-pulse" style="animation-delay: 0.5s;"></div>
+                    </div>
+                </div>
+                
+                <!-- Bubble Generator -->
+                <div id="bubble-container" class="absolute inset-0 pointer-events-none overflow-hidden">
+                    <!-- Bubbles will be dynamically added here -->
+                </div>
+                
+                <!-- Fish Container -->
+                <div id="fish-container" class="absolute inset-0 overflow-hidden">
+                    <!-- Fish will be dynamically added here -->
+                </div>
+                
+                <!-- Cleaning Effect Overlay -->
+                <div id="cleaning-overlay" class="absolute inset-0 bg-white/30 rounded-lg opacity-0 transition-opacity duration-500 pointer-events-none"></div>
+                
+                <!-- Food Particles Container -->
+                <div id="food-container" class="absolute inset-0 pointer-events-none overflow-hidden">
+                    <!-- Food particles will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel (Bottom 1/3) -->
+        <div class="flex-shrink-0 bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 px-6 py-6 max-h-[40vh] overflow-y-auto border-t border-slate-700/50">
+            <!-- Action Buttons Grid -->
+            <div class="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6">
+                <button id="add-fish-btn" class="group bg-gradient-to-br from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-medium py-5 px-3 rounded-2xl shadow-xl transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 active:scale-95 touch-ripple border border-blue-400/20">
+                    <div class="flex flex-col items-center space-y-2">
+                        <div class="text-2xl group-hover:scale-110 transition-transform duration-300">🐟</div>
+                        <span class="text-xs font-semibold">Add Fish</span>
+                        <span class="text-xs opacity-75">20 🪙</span>
+                    </div>
+                </button>
+                
+                <button id="feed-fish-btn" class="group bg-gradient-to-br from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white font-medium py-5 px-3 rounded-2xl shadow-xl transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 active:scale-95 touch-ripple border border-yellow-400/20">
+                    <div class="flex flex-col items-center space-y-2">
+                        <div class="text-2xl group-hover:scale-110 transition-transform duration-300">🍤</div>
+                        <span class="text-xs font-semibold">Feed Fish</span>
+                        <span class="text-xs opacity-75">Uses Food</span>
+                    </div>
+                </button>
+                
+                <button id="clean-tank-btn" class="group bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium py-5 px-3 rounded-2xl shadow-xl transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 active:scale-95 touch-ripple border border-green-400/20">
+                    <div class="flex flex-col items-center space-y-2">
+                        <div class="text-2xl group-hover:scale-110 transition-transform duration-300">🧽</div>
+                        <span class="text-xs font-semibold">Clean Tank</span>
+                        <span class="text-xs opacity-75">Uses Cleaner</span>
+                    </div>
+                </button>
+                
+                <button id="remove-fish-btn" class="group bg-gradient-to-br from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white font-medium py-5 px-3 rounded-2xl shadow-xl transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 active:scale-95 touch-ripple border border-red-400/20">
+                    <div class="flex flex-col items-center space-y-2">
+                        <div class="text-2xl group-hover:scale-110 transition-transform duration-300">🗑️</div>
+                        <span class="text-xs font-semibold">Remove Fish</span>
+                        <span class="text-xs opacity-75">+5 🪙 Each</span>
+                    </div>
+                </button>
+                
+                <button id="store-btn" class="group bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-medium py-5 px-3 rounded-2xl shadow-xl transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 active:scale-95 touch-ripple border border-purple-400/20">
+                    <div class="flex flex-col items-center space-y-2">
+                        <div class="text-2xl group-hover:scale-110 transition-transform duration-300">🏪</div>
+                        <span class="text-xs font-semibold">Store</span>
+                        <span class="text-xs opacity-75">Buy Items</span>
+                    </div>
+                </button>
+                
+                <button id="special-fish-btn" class="group bg-gradient-to-br from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white font-medium py-5 px-3 rounded-2xl shadow-xl transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 active:scale-95 touch-ripple border border-pink-400/20">
+                    <div class="flex flex-col items-center space-y-2">
+                        <div class="text-2xl group-hover:scale-110 transition-transform duration-300">🦈</div>
+                        <span class="text-xs font-semibold">Sea Creature</span>
+                        <span class="text-xs opacity-75">Uses Special</span>
+                    </div>
+                </button>
+            </div>
+            
+            <!-- Storage Display -->
+            <div class="bg-gradient-to-br from-slate-700/60 to-slate-800/60 backdrop-blur-sm rounded-xl p-4 glass-morphism border border-slate-600/30 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-white font-bold text-lg">Inventory</h3>
+                    <div class="flex items-center space-x-2 bg-slate-600/40 rounded-full px-3 py-1 border border-slate-500/30">
+                        <span class="text-yellow-400 text-base">🪙</span>
+                        <span class="text-yellow-400 font-bold text-base" id="coins-display-bottom">100</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-gradient-to-br from-slate-600/40 to-slate-700/40 rounded-lg p-3 border border-slate-500/20 hover:border-yellow-400/40 transition-all duration-300 group">
+                        <div class="text-center space-y-2">
+                            <div class="text-2xl group-hover:scale-110 transition-transform duration-300">🍤</div>
+                            <div class="text-white text-xs font-medium">Food</div>
+                            <div class="text-yellow-400 font-bold text-lg" id="food-count">5</div>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-slate-600/40 to-slate-700/40 rounded-lg p-3 border border-slate-500/20 hover:border-green-400/40 transition-all duration-300 group">
+                        <div class="text-center space-y-2">
+                            <div class="text-2xl group-hover:scale-110 transition-transform duration-300">🧽</div>
+                            <div class="text-white text-xs font-medium">Cleaner</div>
+                            <div class="text-green-400 font-bold text-lg" id="cleaner-count">3</div>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-slate-600/40 to-slate-700/40 rounded-lg p-3 border border-slate-500/20 hover:border-purple-400/40 transition-all duration-300 group">
+                        <div class="text-center space-y-2">
+                            <div class="text-2xl group-hover:scale-110 transition-transform duration-300">🎁</div>
+                            <div class="text-white text-xs font-medium">Special</div>
+                            <div class="text-purple-400 font-bold text-lg" id="special-count">1</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Store Modal -->
+    <div id="store-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-slate-800 rounded-2xl p-6 m-4 max-w-md w-full max-h-[80vh] overflow-y-auto transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-white">Aquarium Store</h2>
+                <button id="close-store" class="text-gray-400 hover:text-white text-2xl">×</button>
+            </div>
+            
+            <!-- Current Coins Display -->
+            <div class="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-xl p-4 mb-6">
+                <div class="flex items-center justify-center space-x-3">
+                    <span class="text-3xl">🪙</span>
+                    <div class="text-center">
+                        <p class="text-yellow-400 font-bold text-2xl" id="store-coins-display">100</p>
+                        <p class="text-yellow-300/80 text-sm">Available Coins</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="bg-slate-700 rounded-xl p-4">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-3xl">🍤</span>
+                            <div>
+                                <h3 class="text-white font-semibold">Fish Food</h3>
+                                <p class="text-gray-400 text-sm">Nutritious meals for your fish</p>
+                            </div>
+                        </div>
+                        <button class="buy-btn bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-semibold" data-item="food" data-cost="10">
+                            10 🪙
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-700 rounded-xl p-4">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-3xl">🧽</span>
+                            <div>
+                                <h3 class="text-white font-semibold">Tank Cleaner</h3>
+                                <p class="text-gray-400 text-sm">Keep your aquarium sparkling</p>
+                            </div>
+                        </div>
+                        <button class="buy-btn bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold" data-item="cleaner" data-cost="15">
+                            15 🪙
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-700 rounded-xl p-4">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-3xl">🎁</span>
+                            <div>
+                                <h3 class="text-white font-semibold">Mystery Box</h3>
+                                <p class="text-gray-400 text-sm">Special surprises for your tank</p>
+                            </div>
+                        </div>
+                        <button class="buy-btn bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold" data-item="special" data-cost="50">
+                            50 🪙
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Messages -->
+    <div id="message-container" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 pointer-events-none">
+        <!-- Messages will be dynamically added here -->
+    </div>
+
+    <script>
+        class AquariumSimulator {
+            constructor() {
+                this.fish = [];
+                this.gameData = {
+                    coins: 100,
+                    food: 5,
+                    cleaner: 3,
+                    special: 1,
+                    happiness: 'Neutral',
+                    fishCount: 0
+                };
+                this.tankScale = 1;
+                this.maxZoom = 2;
+                this.minZoom = 0.5;
+                this.isRemoveMode = false;
+                this.bubbleInterval = null;
+                this.lastFishEmoji = null;
+                this.lastHappinessLevel = 50; // Track happiness changes
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.startBubbleGeneration();
+                this.startHappinessTracking();
+                this.updateUI();
+                this.loadGameData();
+            }
+            
+            setupEventListeners() {
+                // Landing screen
+                document.getElementById('start-btn').addEventListener('click', () => {
+                    this.startGame();
+                });
+                
+                // Main game buttons
+                document.getElementById('add-fish-btn').addEventListener('click', () => {
+                    this.addFish();
+                });
+                
+                document.getElementById('feed-fish-btn').addEventListener('click', () => {
+                    this.feedFish();
+                });
+                
+                document.getElementById('clean-tank-btn').addEventListener('click', () => {
+                    this.cleanTank();
+                });
+                
+                document.getElementById('remove-fish-btn').addEventListener('click', () => {
+                    this.toggleRemoveMode();
+                });
+                
+                document.getElementById('store-btn').addEventListener('click', () => {
+                    this.openStore();
+                });
+                
+                document.getElementById('special-fish-btn').addEventListener('click', () => {
+                    this.addSpecialFish();
+                });
+                
+                // Zoom controls
+                document.getElementById('zoom-in').addEventListener('click', () => {
+                    this.zoomIn();
+                });
+                
+                document.getElementById('zoom-out').addEventListener('click', () => {
+                    this.zoomOut();
+                });
+                
+                // Store modal
+                document.getElementById('close-store').addEventListener('click', () => {
+                    this.closeStore();
+                });
+                
+                document.querySelectorAll('.buy-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const item = e.target.dataset.item;
+                        const cost = parseInt(e.target.dataset.cost);
+                        this.buyItem(item, cost);
+                    });
+                });
+                
+                // Tank interactions
+                const tankContainer = document.getElementById('tank-container');
+                
+                // Touch/click for feeding and fish interaction
+                tankContainer.addEventListener('click', (e) => {
+                    if (!this.isRemoveMode) {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const clickX = e.clientX - rect.left;
+                        const clickY = e.clientY - rect.top;
+                        
+                        // Make nearby fish follow the click
+                        this.attractFishToClick(clickX, clickY);
+                        
+                        this.handleTankTap(e);
+                    }
+                });
+                
+                // Swipe gestures for cleaning
+                let startY = 0;
+                let startX = 0;
+                
+                tankContainer.addEventListener('touchstart', (e) => {
+                    startY = e.touches[0].clientY;
+                    startX = e.touches[0].clientX;
+                });
+                
+                tankContainer.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                });
+                
+                tankContainer.addEventListener('touchend', (e) => {
+                    const endY = e.changedTouches[0].clientY;
+                    const endX = e.changedTouches[0].clientX;
+                    const diffY = startY - endY;
+                    const diffX = Math.abs(startX - endX);
+                    
+                    // Swipe up gesture for cleaning
+                    if (diffY > 50 && diffX < 100 && this.gameData.cleaner > 0) {
+                        this.cleanTank();
+                    }
+                });
+                
+                // Pinch to zoom
+                let initialDistance = 0;
+                
+                tankContainer.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 2) {
+                        initialDistance = this.getDistance(e.touches[0], e.touches[1]);
+                    }
+                });
+                
+                tankContainer.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 2) {
+                        e.preventDefault();
+                        const currentDistance = this.getDistance(e.touches[0], e.touches[1]);
+                        const scale = currentDistance / initialDistance;
+                        
+                        if (scale > 1.1) {
+                            this.zoomIn();
+                            initialDistance = currentDistance;
+                        } else if (scale < 0.9) {
+                            this.zoomOut();
+                            initialDistance = currentDistance;
+                        }
+                    }
+                });
+            }
+            
+            startGame() {
+                const landingScreen = document.getElementById('landing-screen');
+                const appContainer = document.getElementById('app-container');
+                
+                landingScreen.style.opacity = '0';
+                landingScreen.style.pointerEvents = 'none';
+                
+                setTimeout(() => {
+                    appContainer.style.opacity = '1';
+                    landingScreen.style.display = 'none';
+                }, 1000);
+                
+                // Add initial fish and show tank
+                setTimeout(() => {
+                    this.addFish();
+                    this.showMessage('Welcome to your aquarium! 🐟', 'success');
+                }, 1500);
+            }
+            
+            addFish() {
+                if (this.gameData.coins >= 20) {
+                    this.gameData.coins -= 20;
+                    this.gameData.fishCount++;
+                    
+                    const fish = this.createFish('normal');
+                    this.fish.push(fish);
+                    
+                    this.updateUI();
+                    this.showMessage('New fish added! 🐟', 'success');
+                    this.calculateHappiness();
+                } else {
+                    this.showMessage('Not enough coins! Need 20 🪙', 'error');
+                }
+            }
+            
+            addSpecialFish() {
+                if (this.gameData.special > 0) {
+                    this.gameData.special--;
+                    this.gameData.fishCount++;
+                    
+                    const fish = this.createFish('special');
+                    this.fish.push(fish);
+                    
+                    this.updateUI();
+                    this.showMessage('Sea creature added! 🦈', 'success');
+                    this.calculateHappiness();
+                } else {
+                    this.showMessage('No special creatures available!', 'error');
+                }
+            }
+            
+            createFish(type = 'normal') {
+                const fishContainer = document.getElementById('fish-container');
+                const fishElement = document.createElement('div');
+                
+                const animationType = ['animate-swim-left', 'animate-swim-right', 'animate-swim-circular'][Math.floor(Math.random() * 3)];
+                
+                // Set size and emoji based on type
+                let fishEmoji, size;
+                if (type === 'special') {
+                    const specialFish = ['🦈', '🐋', '🐙', '🦑'];
+                    fishEmoji = specialFish[Math.floor(Math.random() * specialFish.length)];
+                    size = 'text-6xl w-24 h-16'; // Larger for special fish
+                } else {
+                    // Only use well-supported fish and aquatic creature emojis
+                    const normalFish = ['🐟', '🐠', '🐡', '🐬', '🐢', '🦈', '🐙', '🦑'];
+                    // Improved randomization to avoid repetition
+                    do {
+                        fishEmoji = normalFish[Math.floor(Math.random() * normalFish.length)];
+                    } while (this.lastFishEmoji === fishEmoji && normalFish.length > 1);
+                    this.lastFishEmoji = fishEmoji;
+                    size = 'text-4xl w-16 h-12'; // Regular size for normal fish
+                }
+                
+                fishElement.className = `absolute ${size} ${animationType} cursor-pointer fish-svg transition-all duration-300 hover:scale-110 flex items-center justify-center z-20 select-none`;
+                fishElement.style.left = Math.random() * 60 + 10 + '%';
+                fishElement.style.top = Math.random() * 50 + 15 + '%';
+                
+                // Add fish emoji - no background, just the fish
+                fishElement.innerHTML = fishEmoji;
+                
+                // Fish click handler for removal
+                fishElement.addEventListener('click', (e) => {
+                    if (this.isRemoveMode) {
+                        e.stopPropagation();
+                        this.removeFish(fishElement);
+                    }
+                });
+                
+                fishContainer.appendChild(fishElement);
+                
+                return {
+                    element: fishElement,
+                    type: type,
+                    happiness: 50,
+                    lastFed: Date.now(),
+                    id: Date.now() + Math.random()
+                };
+            }
+            
+            removeFish(fishElement) {
+                const fishIndex = this.fish.findIndex(f => f.element === fishElement);
+                if (fishIndex > -1) {
+                    this.fish.splice(fishIndex, 1);
+                    fishElement.remove();
+                    this.gameData.fishCount--;
+                    this.gameData.coins += 5; // Small refund
+                    
+                    this.updateUI();
+                    this.showMessage('Fish removed! +5 🪙', 'info');
+                    this.calculateHappiness();
+                }
+            }
+            
+            toggleRemoveMode() {
+                this.isRemoveMode = !this.isRemoveMode;
+                const removeBtn = document.getElementById('remove-fish-btn');
+                
+                if (this.isRemoveMode) {
+                    removeBtn.classList.add('ring-4', 'ring-red-300');
+                    this.showMessage('Click on fish to remove them', 'info');
+                } else {
+                    removeBtn.classList.remove('ring-4', 'ring-red-300');
+                }
+            }
+            
+            feedFish() {
+                if (this.gameData.food > 0 && this.fish.length > 0) {
+                    this.gameData.food--;
+                    this.createFoodParticles();
+                    
+                    // Update fish happiness with more significant boost
+                    this.fish.forEach(fish => {
+                        fish.happiness = Math.min(100, fish.happiness + 25);
+                        fish.lastFed = Date.now();
+                        
+                        // Add feeding animation
+                        fish.element.classList.add('animate-pulse');
+                        setTimeout(() => {
+                            fish.element.classList.remove('animate-pulse');
+                            // Add a temporary glow effect
+                            fish.element.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 10px rgba(34, 197, 94, 0.8))';
+                            setTimeout(() => {
+                                fish.element.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))';
+                            }, 2000);
+                        }, 1000);
+                    });
+                    
+                    this.updateUI();
+                    this.showMessage('Fish fed! They look happy! 😊', 'success');
+                    this.calculateHappiness();
+                } else if (this.gameData.food === 0) {
+                    this.showMessage('No food available! Buy some from the store', 'error');
+                } else {
+                    this.showMessage('No fish to feed!', 'error');
+                }
+            }
+            
+            createFoodParticles() {
+                const foodContainer = document.getElementById('food-container');
+                
+                for (let i = 0; i < 8; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'absolute w-3 h-3 bg-yellow-400 rounded-full animate-bounce z-15';
+                    particle.style.left = Math.random() * 80 + 10 + '%';
+                    particle.style.top = '10%';
+                    particle.style.animationDelay = i * 0.15 + 's';
+                    particle.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+                    
+                    foodContainer.appendChild(particle);
+                    
+                    // Animate falling
+                    setTimeout(() => {
+                        particle.style.top = Math.random() * 60 + 30 + '%';
+                        particle.style.transition = 'top 2.5s ease-in';
+                    }, i * 150);
+                    
+                    // Remove after animation
+                    setTimeout(() => {
+                        particle.remove();
+                    }, 4000);
+                }
+            }
+            
+            cleanTank() {
+                if (this.gameData.cleaner > 0) {
+                    this.gameData.cleaner--;
+                    
+                    // Show cleaning animation
+                    const cleaningOverlay = document.getElementById('cleaning-overlay');
+                    cleaningOverlay.style.opacity = '1';
+                    
+                    setTimeout(() => {
+                        cleaningOverlay.style.opacity = '0';
+                    }, 1000);
+                    
+                    // Increase fish happiness significantly
+                    this.fish.forEach(fish => {
+                        fish.happiness = Math.min(100, fish.happiness + 15);
+                        // Add sparkle effect to fish
+                        fish.element.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 8px rgba(59, 130, 246, 0.6))';
+                        setTimeout(() => {
+                            fish.element.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))';
+                        }, 3000);
+                    });
+                    
+                    this.updateUI();
+                    this.showMessage('Tank cleaned! Fish love the fresh water! ✨', 'success');
+                    this.calculateHappiness();
+                } else {
+                    this.showMessage('No cleaning supplies! Buy some from the store', 'error');
+                }
+            }
+            
+            handleTankTap(e) {
+                // Create ripple effect
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const ripple = document.createElement('div');
+                ripple.className = 'absolute rounded-full bg-white/30 pointer-events-none animate-ping';
+                ripple.style.left = x - 10 + 'px';
+                ripple.style.top = y - 10 + 'px';
+                ripple.style.width = '20px';
+                ripple.style.height = '20px';
+                
+                e.currentTarget.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 1000);
+                
+                // Generate coins occasionally
+                if (Math.random() < 0.3) {
+                    this.gameData.coins += 5;
+                    this.updateUI();
+                    this.showMessage('+5 🪙', 'success');
+                }
+            }
+            
+            attractFishToClick(clickX, clickY) {
+                const tankContainer = document.getElementById('tank-container');
+                const tankRect = tankContainer.getBoundingClientRect();
+                
+                this.fish.forEach(fish => {
+                    const fishElement = fish.element;
+                    const fishRect = fishElement.getBoundingClientRect();
+                    
+                    // Calculate distance from click to fish center
+                    const fishCenterX = fishRect.left + fishRect.width / 2 - tankRect.left;
+                    const fishCenterY = fishRect.top + fishRect.height / 2 - tankRect.top;
+                    const distance = Math.sqrt(
+                        Math.pow(clickX - fishCenterX, 2) + Math.pow(clickY - fishCenterY, 2)
+                    );
+                    
+                    // Only attract fish within a certain radius (150px)
+                    if (distance < 150) {
+                        // Calculate new position (move towards click but not exactly to it)
+                        const moveDistance = Math.min(distance * 0.6, 80); // Move 60% of the way, max 80px
+                        const angle = Math.atan2(clickY - fishCenterY, clickX - fishCenterX);
+                        
+                        let newX = fishCenterX + Math.cos(angle) * moveDistance;
+                        let newY = fishCenterY + Math.sin(angle) * moveDistance;
+                        
+                        // Keep fish within tank boundaries (with some padding)
+                        const padding = 50;
+                        newX = Math.max(padding, Math.min(tankContainer.offsetWidth - padding, newX));
+                        newY = Math.max(padding, Math.min(tankContainer.offsetHeight - padding, newY));
+                        
+                        // Convert to percentage for consistent positioning
+                        const newXPercent = (newX / tankContainer.offsetWidth) * 100;
+                        const newYPercent = (newY / tankContainer.offsetHeight) * 100;
+                        
+                        // Remove current animations temporarily
+                        const currentClasses = fishElement.className;
+                        fishElement.className = fishElement.className.replace(/animate-swim-\w+/g, '');
+                        
+                        // Add attraction animation and movement
+                        fishElement.style.transition = 'left 1.5s ease-out, top 1.5s ease-out, transform 0.3s ease-out';
+                        fishElement.style.left = newXPercent + '%';
+                        fishElement.style.top = newYPercent + '%';
+                        
+                        // Add excited animation
+                        fishElement.style.transform = 'scale(1.1)';
+                        fishElement.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 12px rgba(6, 182, 212, 0.7))';
+                        
+                        // Reset animation and effects after movement
+                        setTimeout(() => {
+                            fishElement.style.transition = '';
+                            fishElement.style.transform = '';
+                            fishElement.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))';
+                            fishElement.className = currentClasses;
+                        }, 1500);
+                        
+                        // Increase fish happiness slightly when they interact
+                        fish.happiness = Math.min(100, fish.happiness + 5);
+                    }
+                });
+            }
+            
+            zoomIn() {
+                if (this.tankScale < this.maxZoom) {
+                    this.tankScale += 0.1;
+                    this.applyZoom();
+                }
+            }
+            
+            zoomOut() {
+                if (this.tankScale > this.minZoom) {
+                    this.tankScale -= 0.1;
+                    this.applyZoom();
+                }
+            }
+            
+            applyZoom() {
+                const fishContainer = document.getElementById('fish-container');
+                fishContainer.style.transform = `scale(${this.tankScale})`;
+                fishContainer.style.transformOrigin = 'center center';
+            }
+            
+            getDistance(touch1, touch2) {
+                return Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+            }
+            
+            startBubbleGeneration() {
+                this.bubbleInterval = setInterval(() => {
+                    this.createBubble();
+                }, 2000);
+            }
+            
+            startHappinessTracking() {
+                // Update happiness every 30 seconds
+                setInterval(() => {
+                    this.calculateHappiness();
+                }, 30000);
+            }
+            
+            createBubble() {
+                const bubbleContainer = document.getElementById('bubble-container');
+                const bubble = document.createElement('div');
+                
+                const size = Math.random() * 10 + 5;
+                bubble.className = 'absolute rounded-full bg-white/30 animate-bubble-rise pointer-events-none';
+                bubble.style.width = size + 'px';
+                bubble.style.height = size + 'px';
+                bubble.style.left = Math.random() * 90 + 5 + '%';
+                bubble.style.bottom = '0px';
+                bubble.style.animationDelay = Math.random() * 2 + 's';
+                
+                bubbleContainer.appendChild(bubble);
+                
+                setTimeout(() => {
+                    bubble.remove();
+                }, 6000);
+            }
+            
+            calculateHappiness() {
+                if (this.fish.length === 0) {
+                    this.gameData.happiness = 'Neutral';
+                    return;
+                }
+                
+                const now = Date.now();
+                let totalHappiness = 0;
+                
+                // Update each fish's happiness based on care
+                this.fish.forEach(fish => {
+                    const timeSinceLastFed = now - fish.lastFed;
+                    const minutesWithoutFood = timeSinceLastFed / (1000 * 60);
+                    
+                    // Gradual happiness decay over time (every 2 minutes)
+                    if (minutesWithoutFood > 2) {
+                        const decayAmount = Math.floor(minutesWithoutFood / 2) * 2;
+                        fish.happiness = Math.max(0, fish.happiness - decayAmount);
+                    }
+                    
+                    totalHappiness += fish.happiness;
+                });
+                
+                const avgHappiness = totalHappiness / this.fish.length;
+                
+                // Set happiness levels with more nuanced descriptions
+                if (avgHappiness >= 90) {
+                    this.gameData.happiness = 'Ecstatic! 🤩';
+                } else if (avgHappiness >= 75) {
+                    this.gameData.happiness = 'Very Happy 😄';
+                } else if (avgHappiness >= 60) {
+                    this.gameData.happiness = 'Happy 😊';
+                } else if (avgHappiness >= 45) {
+                    this.gameData.happiness = 'Content 😐';
+                } else if (avgHappiness >= 30) {
+                    this.gameData.happiness = 'Unhappy 😕';
+                } else if (avgHappiness >= 15) {
+                    this.gameData.happiness = 'Sad 😞';
+                } else {
+                    this.gameData.happiness = 'Miserable 😢';
+                }
+                
+                // Special messages for happiness changes
+                if (avgHappiness >= 80 && this.lastHappinessLevel < 80) {
+                    this.showMessage('Your fish are thriving! 🌟', 'success');
+                } else if (avgHappiness <= 30 && this.lastHappinessLevel > 30) {
+                    this.showMessage('Your fish need attention! 🆘', 'error');
+                }
+                
+                this.lastHappinessLevel = avgHappiness;
+                this.updateUI();
+            }
+            
+            openStore() {
+                const storeModal = document.getElementById('store-modal');
+                // Update the coin display in the store
+                document.getElementById('store-coins-display').textContent = this.gameData.coins;
+                storeModal.style.opacity = '1';
+                storeModal.style.pointerEvents = 'auto';
+                storeModal.querySelector('div').style.transform = 'scale(1)';
+            }
+            
+            closeStore() {
+                const storeModal = document.getElementById('store-modal');
+                storeModal.style.opacity = '0';
+                storeModal.style.pointerEvents = 'none';
+                storeModal.querySelector('div').style.transform = 'scale(0.95)';
+            }
+            
+            buyItem(item, cost) {
+                if (this.gameData.coins >= cost) {
+                    this.gameData.coins -= cost;
+                    this.gameData[item]++;
+                    
+                    this.updateUI();
+                    // Update the store coin display immediately
+                    document.getElementById('store-coins-display').textContent = this.gameData.coins;
+                    this.showMessage(`Bought ${item}! 🛒`, 'success');
+                } else {
+                    this.showMessage('Not enough coins! 💰', 'error');
+                }
+            }
+            
+            showMessage(text, type = 'info') {
+                const messageContainer = document.getElementById('message-container');
+                const message = document.createElement('div');
+                
+                const bgColor = {
+                    success: 'bg-green-500',
+                    error: 'bg-red-500',
+                    info: 'bg-blue-500'
+                }[type];
+                
+                message.className = `${bgColor} text-white px-6 py-3 rounded-full shadow-lg mb-2 transform translate-y-[-20px] opacity-0 transition-all duration-300 font-semibold`;
+                message.textContent = text;
+                
+                messageContainer.appendChild(message);
+                
+                // Animate in
+                setTimeout(() => {
+                    message.style.transform = 'translateY(0)';
+                    message.style.opacity = '1';
+                }, 100);
+                
+                // Remove after delay
+                setTimeout(() => {
+                    message.style.transform = 'translateY(-20px)';
+                    message.style.opacity = '0';
+                    setTimeout(() => {
+                        message.remove();
+                    }, 300);
+                }, 3000);
+            }
+            
+            updateUI() {
+                document.getElementById('fish-count').textContent = this.gameData.fishCount;
+                document.getElementById('coins-display').textContent = this.gameData.coins;
+                document.getElementById('coins-display-bottom').textContent = this.gameData.coins;
+                document.getElementById('happiness-display').textContent = this.gameData.happiness;
+                document.getElementById('food-count').textContent = this.gameData.food;
+                document.getElementById('cleaner-count').textContent = this.gameData.cleaner;
+                document.getElementById('special-count').textContent = this.gameData.special;
+                
+                this.saveGameData();
+            }
+            
+            saveGameData() {
+                localStorage.setItem('aquariumGameData', JSON.stringify(this.gameData));
+            }
+            
+            loadGameData() {
+                const saved = localStorage.getItem('aquariumGameData');
+                if (saved) {
+                    this.gameData = { ...this.gameData, ...JSON.parse(saved) };
+                    this.updateUI();
+                }
+            }
+        }
+        
+        // Initialize the game when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new AquariumSimulator();
+        });
+    </script>
+</body>
+</html>
